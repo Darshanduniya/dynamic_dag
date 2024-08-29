@@ -1,0 +1,48 @@
+from airflow import DAG
+from airflow.operators.dummy import DummyOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from datetime import datetime
+
+default_args = {
+    'owner': 'airflow',
+    'start_date': datetime(2023, 1, 1),
+}
+
+with DAG('dag_one', default_args=default_args, schedule_interval=None, catchup=False) as dag_one:
+    task1 = DummyOperator(task_id='task1')
+    task2 = DummyOperator(task_id='task2')
+    task3 = DummyOperator(task_id='task3')
+    task4 = DummyOperator(task_id='task4')
+    task5 = DummyOperator(task_id='task5')
+
+    trigger_dag_two = TriggerDagRunOperator(
+        task_id='trigger_dag_two',
+        trigger_dag_id='dag_two',
+        wait_for_completion=True
+    )
+
+    task1 >> task2 >> task3 >> trigger_dag_two
+    trigger_dag_two >> task4 >> task5
+DAG Two
+from airflow import DAG
+from airflow.operators.dummy import DummyOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from datetime import datetime
+
+default_args = {
+    'owner': 'airflow',
+    'start_date': datetime(2023, 1, 1),
+}
+
+with DAG('dag_two', default_args=default_args, schedule_interval=None, catchup=False) as dag_two:
+    task_a = DummyOperator(task_id='task_a')
+    task_b = DummyOperator(task_id='task_b')
+
+    trigger_dag_one = TriggerDagRunOperator(
+        task_id='trigger_dag_one',
+        trigger_dag_id='dag_one',
+        wait_for_completion=False,
+        conf={'start_task': 'task4'}  # Pass configuration if needed
+    )
+
+    task_a >> task_b >> trigger_dag_one
