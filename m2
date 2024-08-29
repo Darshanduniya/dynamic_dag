@@ -30,6 +30,15 @@ task1 >> task2 >> task3 >> trigger_dag_two
 trigger_dag_two >> task4 >> task5
 
 
+def sleep_for_60_seconds():
+    sleep(60)
+
+sleep_task = PythonOperator(
+    task_id='sleep_for_60_seconds',
+    python_callable=sleep_for_60_seconds,
+    dag=dag_one,
+)
+
 
 ===
 from airflow import DAG
