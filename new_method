@@ -46,3 +46,17 @@ with DAG('dag_two', default_args=default_args, schedule_interval=None, catchup=F
     )
 
     task_a >> task_b >> trigger_dag_one
+
+
+===
+
+
+def sleep_task():
+    time.sleep(60)
+
+ sleep_task_op = PythonOperator(
+        task_id='sleep_task',
+        python_callable=sleep_task
+    )
+
+
