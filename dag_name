@@ -1,0 +1,61 @@
+from airflow import DAG
+from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.python_operator import PythonOperator
+from datetime import datetime, timedelta
+
+# Define default arguments
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2024, 9, 1),
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
+
+# Define the DAG
+dag = DAG(
+    dag_id='US_TEC_WKD_A',
+    default_args=default_args,
+    description='A DAG that extracts industry and stack from the DAG name and uses them in one task',
+    schedule_interval=timedelta(days=1),
+    catchup=False,
+)
+
+# Task that extracts variables and performs actions with them
+def process_dag_name(**kwargs):
+    # Extract the dag_name
+    dag_name = kwargs['dag'].dag_id
+    
+    # Split the dag_name and extract industry and stack
+    parts = dag_name.split('_')
+    industry = '_'.join(parts[1:3])  # TEC_WKD
+    stack = parts[-1]  # A
+    
+    # Use the extracted variables (e.g., print them or pass to another function)
+    print(f"Industry: {industry}")
+    print(f"Stack: {stack}")
+    
+    # Additional logic using industry and stack can go here
+
+# Define tasks
+start = DummyOperator(
+    task_id='start',
+    dag=dag,
+)
+
+process_dag_name_task = PythonOperator(
+    task_id='process_dag_name_task',
+    python_callable=process_dag_name,
+    provide_context=True,
+    dag=dag,
+)
+
+end = DummyOperator(
+    task_id='end',
+    dag=dag,
+)
+
+# Set task dependencies
+start >> process_dag_name_task >> end
