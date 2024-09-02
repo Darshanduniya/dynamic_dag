@@ -1,0 +1,40 @@
+import csv
+from airflow import DAG
+from airflow.operators.dummy_operator import DummyOperator
+from datetime import datetime, timedelta
+
+def create_dag(spark_size, stack):
+    dag_name = f"data_load_{spark_size}_{stack}"
+    
+    default_args = {
+        'owner': 'airflow',
+        'depends_on_past': False,
+        'start_date': datetime(2023, 8, 1),
+        'email_on_failure': False,
+        'email_on_retry': False,
+        'retries': 1,
+        'retry_delay': timedelta(minutes=5),
+    }
+    
+    dag = DAG(
+        dag_name,
+        default_args=default_args,
+        description=f"A data load DAG for spark size {spark_size} and stack {stack}",
+        schedule_interval=timedelta(days=1),
+        catchup=False,
+    )
+    
+    start = DummyOperator(task_id='start', dag=dag)
+    end = DummyOperator(task_id='end', dag=dag)
+    
+    start >> end
+    
+    return dag
+
+# Read the CSV file and create DAGs
+with open('dag_parameters.csv', mode='r') as file:
+    reader = csv.DictReader(file)
+    for row in reader:
+        spark_size = row['spark_size']
+        stack = row['stack']
+        globals()[f"{spark_size}_dag"] = create_dag(spark_size, stack)
