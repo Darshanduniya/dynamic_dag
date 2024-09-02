@@ -1,0 +1,29 @@
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from datetime import datetime
+
+# Function to extract variables from the DAG name
+def extract_variables(**kwargs):
+    dag_name = kwargs['dag'].dag_id
+    industry_name = '_'.join(dag_name.split('_')[1:-1])  # Extracts 'TEC_WKD'
+    stack = dag_name.split('_')[-1]  # Extracts 'A'
+    print(f"Industry Name: {industry_name}, Stack: {stack}")
+    return industry_name, stack
+
+# Define the DAG
+with DAG(
+    dag_id='US_TEC_WKD_A',
+    start_date=datetime(2023, 1, 1),
+    schedule_interval='@daily',
+    catchup=False
+) as dag:
+
+    # Task to extract variables
+    extract_task = PythonOperator(
+        task_id='extract_variables',
+        python_callable=extract_variables,
+        provide_context=True
+    )
+
+# To execute the DAG, run the following command in the terminal:
+# airflow dags trigger US_TEC_WKD_A
