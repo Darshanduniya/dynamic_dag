@@ -1,0 +1,30 @@
+from datetime import datetime
+from airflow import DAG
+from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.python_operator import PythonOperator
+
+def always_fail():
+    raise ValueError("This DAG is disabled")
+
+default_args = {
+    'owner': 'airflow',
+    'start_date': datetime(2023, 1, 1),
+}
+
+dag = DAG(
+    'example_dag',
+    default_args=default_args,
+    schedule_interval='@daily',
+)
+
+disable_task = PythonOperator(
+    task_id='disable_task',
+    python_callable=always_fail,
+    dag=dag,
+)
+
+# Add your other tasks here and set them to depend on disable_task
+task1 = DummyOperator(task_id='task1', dag=dag)
+task2 = DummyOperator(task_id='task2', dag=dag)
+
+disable_task >> [task1, task2]
